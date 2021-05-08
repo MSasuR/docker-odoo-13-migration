@@ -1,0 +1,29 @@
+version: '2'
+services:
+  build_openupgrade:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: openupgrade
+  openupgrade:
+    image: openupgrade
+    container_name: openupgrade
+    depends_on:
+      - build_openupgrade
+    command: >
+      sh -c "${PIP} install -r ${BASE_DIR}/${TARGET_VERSION}/requirements.txt
+      && python /var/tmp/openupgrade/13.0/odoo-bin --update=all --database=${DB_NAME} --config=${BASE_DIR}/tmp/openupgrade/${TARGET_VERSION}/${CONFIG_FILE} --stop-after-init --no-xmlrpc"
+    volumes:
+      - .:/openupgrade
+      - ./tmp/openupgrade:/var/tmp/openupgrade
+      - ./openupgrade/${TARGET_VERSION}:${BASE_DIR}/${TARGET_VERSION}
+  db:
+    image: postgres:10
+    container_name: db
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_USER=odoo
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data/pgdata
